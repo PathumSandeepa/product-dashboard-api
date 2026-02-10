@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ class ProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(
+        return response()->json(ProductResource::collection(
             Product::query()
                 ->when($request->search, function ($query, $search) {
                     $query->where('title', 'ILIKE', "%{$search}%")
@@ -36,6 +37,7 @@ class ProductController extends Controller
                     };
                 })
                 ->paginate(12)
+        )
         );
     }
 
@@ -47,12 +49,17 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        return response()->json($product);
+        return response()->json(new ProductResource($product));
     }
 
     public function store(StoreProductRequest $request): JsonResponse
     {
-        return response()->json(Product::create($request->validated()), 201);
+        return response()->json(
+            new ProductResource(
+                Product::create($request->validated())
+            ),
+            201
+        );
     }
 
     public function update(UpdateProductRequest $request, string $id): JsonResponse
@@ -65,7 +72,7 @@ class ProductController extends Controller
 
         $product->update($request->validated());
 
-        return response()->json($product);
+        return response()->json(new ProductResource($product));
     }
 
     public function destroy(string $id): JsonResponse
