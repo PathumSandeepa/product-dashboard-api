@@ -37,7 +37,7 @@ class ProductController extends Controller
                     };
                 })
                 ->paginate(12)
-        )
+            )
         );
     }
 
