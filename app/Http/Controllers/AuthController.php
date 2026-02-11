@@ -6,57 +6,72 @@ use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     public function register(StoreUserRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'password' => Hash::make($request->validated('password')),
-        ]);
+        $user = User::create($request->validated());
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = Auth::guard('api')->login($user);
 
         return response()->json([
             'message' => 'User registered successfully',
             'access_token' => $token,
             'token_type' => 'Bearer',
+            'expires_in' => Auth::guard('api')->factory()->getTTL() * 60,
             'user' => $user,
         ], 201);
     }
 
     public function login(LoginUserRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->validated('email'))->first();
+        $credentials = $request->validated();
 
-        if (!$user || !Hash::check($request->validated('password'), $user->password)) {
+        $token = Auth::guard('api')->attempt($credentials);
+
+        if (!$token) {
             return response()->json([
                 'message' => 'Invalid credentials',
             ], 401);
         }
 
-        $user->tokens()->delete();
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return response()->json([
             'message' => 'Login successful',
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'expires_in' => Auth::guard('api')->factory()->getTTL() * 60,
+            'user' => Auth::guard('api')->user(),
         ], 200);
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('api')->logout();
 
         return response()->json([
             'message' => 'Logged out successfully',
+        ], 200);
+    }
+
+    public function refresh(): JsonResponse
+    {
+        $token = Auth::guard('api')->refresh();
+
+        return response()->json([
+            'message' => 'Token refreshed successfully',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => Auth::guard('api')->factory()->getTTL() * 60,
+            'user' => Auth::guard('api')->user(),
+        ], 200);
+    }
+
+    public function me(): JsonResponse
+    {
+        return response()->json([
+            'user' => Auth::guard('api')->user(),
         ], 200);
     }
 }
