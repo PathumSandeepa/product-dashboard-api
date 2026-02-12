@@ -1,0 +1,33 @@
+# Ignore VCS and editor files
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+*.swp
+
+# Ignore dependencies and build artifacts
+node_modules
+vendor
+npm-debug.log
+yarn.lock
+package-lock.json
+
+# Ignore environment and local data
+.env
+.env.*
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+
+# Ignore tests and docs if not needed in image
+tests
+README.md
+CI_CD_SETUP.md
+GITHUB_SECRETS_SETUP.md
+
+# Ignore docker-compose and local tooling
+Dockerfile
+docker-compose.yml
+
