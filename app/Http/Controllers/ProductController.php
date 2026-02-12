@@ -13,7 +13,7 @@ class ProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(ProductResource::collection(
+        return ProductResource::collection(
             Product::query()
                 ->when($request->search, function ($query, $search) {
                     $query->where('title', 'ILIKE', "%{$search}%")
@@ -36,9 +36,8 @@ class ProductController extends Controller
                         default => $query->orderBy('id', 'desc'),
                     };
                 })
-                ->paginate(12)
-            )
-        );
+                ->paginate(10)
+        )->response();
     }
 
     public function show(string $id): JsonResponse
